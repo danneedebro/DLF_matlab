@@ -1,6 +1,8 @@
 classdef ClassDLF < handle
     %ClassDLF Calculates the Dynamic Load Factor for a force
-    %   
+    %
+    %   https://github.com/danneedebro/DLF_matlab   
+    %
     %  Example: Make a DLF plot of the force sin(2*pi*f*t)
     %   time = 0:0.001:1;
     %   force = sin(2*pi*5*time);
@@ -15,6 +17,7 @@ classdef ClassDLF < handle
     %   force2 = ClassDLF(time,forceB);
     %   force1.Plot(force2);
     %
+    %
     
     
     properties
@@ -27,10 +30,11 @@ classdef ClassDLF < handle
         ForceMax            % Max force amplitude
         Tolerance           % The relative tolerance of the solution
         MaxStep             % Max step size for ode solver
+        DeltafMin           % The min step size for frequencies
     end
     
     methods
-        function obj = ClassDLF(timeVector, forceVector)
+        function obj = ClassDLF(timeVector, forceVector, varargin)
             %ClassDLF Creates a DLF object from a time and force vector
             %
             %   Example: Make a DLF plot of the force sin(2*pi*f*t)
@@ -40,13 +44,30 @@ classdef ClassDLF < handle
             %   force1 = ClassDLF(time,force)
             %   plot(force1.TimeVector,force1.DLF)
             %
-            obj.TimeVector = timeVector;
-            obj.ForceVector = forceVector;
-            obj.ForceMax = max(abs(forceVector));
             obj.DampingFactor = 0.05;
             obj.CutoffFrequency = 75;
             obj.Tolerance = 1.0e-5;
-            obj.MaxStep = min(diff(timeVector));
+            obj.TimeVector = timeVector;
+            obj.ForceVector = forceVector;
+            obj.ForceMax = max(abs(forceVector));
+            obj.MaxStep = min(diff(timeVector))*0.5;
+            obj.DeltafMin = 0.5;
+            
+            for i = 1:length(varargin)
+                switch lower(varargin{i})
+                    case 'cutoff'
+                        obj.CutoffFrequency = varargin{i+1};
+                    case 'damping'
+                        obj.DampingFactor = varargin{i+1};
+                    case 'tol'
+                        obj.Tolerance = varargin{i+1}; 
+                    case 'maxstep'
+                        obj.MaxStep = varargin{i+1};
+                    case 'dfmin'
+                        obj.DeltafMin = varargin{i+1};
+                end
+            end
+            
             obj.Frequency = [0,1,obj.CutoffFrequency/2,obj.CutoffFrequency];
             obj.DLF = zeros(size(obj.Frequency));
             obj.GetDLF();
@@ -85,7 +106,6 @@ classdef ClassDLF < handle
             f = obj.Frequency;
             DLF = obj.DLF; %#ok<*PROP>
             
-            
             fprintf('Starting with %d frequiencies\n',length(f));
             
             % Refine with two nested loops. If the innermost loop doesn't
@@ -105,10 +125,8 @@ classdef ClassDLF < handle
                     dDLFdt = (DLF(i)-DLF(i-1))/(df1);
                     DLF_predictor = DLF(i) + dDLFdt*df2;
 
-                    pause(0.3);
-
                     % If DLF(i+1) based on derivate differs more than X% calculate a new DLF 
-                    if abs(DLF(i+1)-DLF_predictor)/DLF(i+1) > 0.05 && df2 > 0.5
+                    if abs(DLF(i+1)-DLF_predictor)/DLF(i+1) > 0.05 && df2 > obj.DeltafMin
                         outerloop = 1;  % if frequency is added, run outer loop once more
                         f_new = f(i)+df2/2;
                         f_added(end+1) = f_new;
