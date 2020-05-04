@@ -1,0 +1,5 @@
+$THAF4     1001     NEWTONS     0     1.
+40411
+*NOD           DX          DY          DZ        FORCE   SHIFT      FACTOR
+*
+1030           0           0           1         CV_101
