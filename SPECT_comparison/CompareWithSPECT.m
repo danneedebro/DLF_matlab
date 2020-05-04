@@ -1,5 +1,9 @@
 close ALL
 
+
+
+
+
 load SPECT_sine1.mat
 
 Sine1 = ClassDLF(SPECT_Sine1.TimeVector,SPECT_Sine1.ForceVector,'cutoff',200,'dfmin',0.25);
@@ -47,7 +51,20 @@ ylabel('DLF');
 
 PlotIt('Pulse1.png')
 
+fileID = fopen('Readme.md','w');
+fprintf(fileID,'#sin(2*pi*5*t), 5%% damping\n');
+fprintf(fileID,'![Image description](Sine1.png)\n');
 
+fprintf(fileID,'#Step function 1, t_start=0.1s, t_rise=0.010s, 5%% damping\n');
+fprintf(fileID,'![Image description](Step1.png)\n');
+
+fprintf(fileID,'#Step function 2, t_start=0.1s, t_rise=0.001s, 5%% damping\n');
+fprintf(fileID,'![Image description](Step2.png)\n');
+
+fprintf(fileID,'#Pulse function, t_start=0.1s, t_rise=0.001s, t_width=0.01s, 5%% damping\n');
+fprintf(fileID,'![Image description](Pulse1.png)\n');
+
+fclose(fileID);
 
 
 function PlotIt(filename)
